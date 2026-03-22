@@ -4,34 +4,30 @@ require_once 'dbfuncs.php';
 
 $error   = '';
 $success = '';
-/*
-|--------------------------------------------------------------------------
-| ⚠️ KWETSBARE CODE (ACTIEF - VOOR LEERDOELEINDEN)
-|--------------------------------------------------------------------------
-| Probleem:
-| - User input wordt direct in SQL geplakt (string concatenation)
-| - Geen escaping of prepared statements
-|
-| Voorbeelden van aanvallen:
-| username: admin' --
-| password: (leeg)
-|
-| Resultaat query:
-| SELECT * FROM users WHERE username = 'admin' -- ' AND password = ''
-| → wachtwoord check wordt genegeerd
-|
-| Of:
-| username: ' OR '1'='1
-| password: ' OR '1'='1
-|
-| → altijd login succesvol
-|
-| RISICO:
-| - Login bypass
-| - Data leakage
-| - Database manipulatie
-|
-*/
+
+session_start();
+
+$maxAttempts = 5;
+$lockoutTime = 60;
+
+if (!isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts'] = 0;
+    $_SESSION['last_attempt'] = time();
+}
+
+
+if ($_SESSION['login_attempts'] >= $maxAttempts) {
+    $timeSinceLast = time() - $_SESSION['last_attempt'];
+
+    if ($timeSinceLast < $lockoutTime) {
+        $remaining = $lockoutTime - $timeSinceLast;
+        $error = "Te veel pogingen. Probeer opnieuw over {$remaining} seconden.";
+    } else {
+        $_SESSION['login_attempts'] = 0;
+    }
+}
+
+
 
 if ($_SERVER['REQUEST_METHOD'] == "POST") {
     if (!empty($_REQUEST['username']) && !empty($_REQUEST['password'])) {
@@ -59,50 +55,70 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 
 
 
-//  if ($_SERVER['REQUEST_METHOD'] == "POST") {
-//      if (!empty($_POST['username']) && !empty($_POST['password'])) {
+// if ($_SERVER['REQUEST_METHOD'] == "POST" && empty($error)) {
 
-//          global $con;
-//          if ($con === null) connect();
+//     if (!empty($_POST['username']) && !empty($_POST['password'])) {
 
-//          $stmt = mysqli_prepare($con, 
-//              "SELECT id, username, password FROM users WHERE username = ?"
-//          );
+//         global $con;
+//         if ($con === null) connect();
 
-//          mysqli_stmt_bind_param($stmt, "s", $_POST['username']);
-//          mysqli_stmt_execute($stmt);
-//          $result = mysqli_stmt_get_result($stmt);
-//          $user = mysqli_fetch_assoc($result);
+//         // ✅ VEILIG: prepared statement
+//         $stmt = mysqli_prepare($con, "SELECT id, username, password FROM users WHERE username = ?");
+//         mysqli_stmt_bind_param($stmt, "s", $_POST['username']);
+//         mysqli_stmt_execute($stmt);
 
-//          // ✅ met password hashing
-//          if ($user && password_verify($_POST['password'], $user['password'])) {
-//              $_SESSION['authed'] = true;
-//              $_SESSION['userid'] = $user['id'];
-//              $_SESSION['username'] = $user['username'];
-//              header('Location: index.php');
-//              exit;
-//          } else {
-//              $error = 'Ongeldige login.';
-//          }
-//      }
-//  }
+//         $result = mysqli_stmt_get_result($stmt);
+//         $user = mysqli_fetch_assoc($result);
+
+//         // ❌ login check (nog plain password, maar geen SQL injection meer)
+//         if (!$user || $_POST['password'] !== $user['password']) {
+
+//             $_SESSION['login_attempts']++;
+//             $_SESSION['last_attempt'] = time();
+
+//             $error = "Ongeldige login. Poging {$_SESSION['login_attempts']} van {$maxAttempts}";
+
+//         } else {
+
+//             $_SESSION['login_attempts'] = 0;
+
+//             $_SESSION['authed']   = true;
+//             $_SESSION['userid']   = $user['id'];
+//             $_SESSION['username'] = $user['username'];
+
+//             header('Location: index.php');
+//             exit;
+//         }
+
+//     } else {
+//         $error = 'Vul alle velden in.';
+//     }
+// }
 
 
 
+// Rate limiting instellingen
+$maxAttempts = 5;      // max pogingen
+$lockoutTime = 60;     // seconden blokkade
 
-/*
-|--------------------------------------------------------------------------
-| 🔐 EXTRA BEST PRACTICES
-|--------------------------------------------------------------------------
-| - Gebruik password_hash() bij registratie:
-|     $hash = password_hash($password, PASSWORD_DEFAULT);
-|
-| - Toon NOOIT SQL queries aan gebruikers
-| - Gebruik $_POST i.p.v. $_REQUEST
-| - Voeg rate limiting toe (tegen brute force)
-| - Log mislukte loginpogingen
-|
-*/
+if (!isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts'] = 0;
+    $_SESSION['last_attempt'] = time();
+}
+
+// Check of gebruiker geblokkeerd is
+if ($_SESSION['login_attempts'] >= $maxAttempts) {
+    $timeSinceLast = time() - $_SESSION['last_attempt'];
+
+    if ($timeSinceLast < $lockoutTime) {
+        $remaining = $lockoutTime - $timeSinceLast;
+        $error = "Te veel pogingen. Probeer opnieuw over {$remaining} seconden.";
+    } else {
+        // reset na timeout
+        $_SESSION['login_attempts'] = 0;
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="nl">

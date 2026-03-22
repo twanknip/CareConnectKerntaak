@@ -20,7 +20,7 @@ $userId  = $_SESSION['userid'] ?? null;
    Zelfde invoer → prepared statement, geen injectie mogelijk
 ════════════════════════════════════════════════════════════════════ */
 
-$USE_VULNERABLE_PROFILE = true;  // ← VERANDER DIT OM TE SCHAKELEN
+$USE_VULNERABLE_PROFILE = false;  // ← VERANDER DIT OM TE SCHAKELEN
                                   // true  = KWETSBAAR (SQL injectie mogelijk)
                                   // false = VEILIG (prepared statements)
 
@@ -128,8 +128,7 @@ if ($userId) {
        
         <?php else: ?>
         <div class="secure-strip">
-          <strong>✅ Prepared statements actief — <code style="font-family:monospace;background:rgba(0,0,0,.06);padding:1px 5px;border-radius:3px;">$USE_VULNERABLE_PROFILE = false</code> in editprofile.php</strong>
-          Invoer wordt als data behandeld. SQL injectie is niet mogelijk.
+        
         </div>
         <?php endif; ?>
 

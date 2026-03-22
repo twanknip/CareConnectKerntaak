@@ -17,7 +17,7 @@ $activePage = 'template';
    Alleen bestanden uit de whitelist mogen worden geladen
 ════════════════════════════════════════════════════════════════════ */
 
-$USE_VULNERABLE_PATH = true;   // ← VERANDER DIT OM TE SCHAKELEN
+$USE_VULNERABLE_PATH = false;   // ← VERANDER DIT OM TE SCHAKELEN
                                 // true  = KWETSBAAR (path traversal mogelijk)
                                 // false = VEILIG (whitelist)
 
@@ -226,18 +226,7 @@ if (!empty($load)) {
         </div>
       </div>
       <?php else: ?> -->
-      <div class="alert-strip strip-safe">
-        <div class="strip-icon">✅</div>
-        <div class="strip-body">
-          <strong>Whitelist verdediging actief — <code>$USE_VULNERABLE_PATH = false</code> in template.php</strong>
-          Alleen bestanden in de goedgekeurde lijst mogen worden geladen. Alle andere paden worden direct geweigerd.
-          <div class="wl-pills">
-            <?php foreach ($WHITELIST as $w): ?>
-            <span class="wl-pill"><?= htmlspecialchars($w) ?></span>
-            <?php endforeach; ?>
-          </div>
-        </div>
-      </div>
+     
       <?php endif; ?>
 
       <!-- Form -->
