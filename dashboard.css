@@ -1,0 +1,331 @@
+/* ═══════════════════════════════════════════════════════════════
+   dashboard.css — CareConnect Artsen Dashboard
+   Alleen gebruikt op index.php, tabblad "Dashboard"
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Page tabs ──────────────────────────────────────────────── */
+.page-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 28px;
+  background: #fff;
+  border: 1px solid #e2edf5;
+  border-radius: 14px;
+  padding: 5px;
+  box-shadow: 0 1px 4px rgba(10,37,64,0.06);
+  width: fit-content;
+}
+
+.page-tab {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 10px;
+  border: none; background: transparent;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.855rem; font-weight: 600;
+  color: #6b8aa8; cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  white-space: nowrap;
+}
+.page-tab:hover { background: #f4f8fc; color: #2c4a65; }
+.page-tab.active {
+  background: linear-gradient(135deg, #0f3460, #1565c0);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(21,101,192,0.3);
+}
+.page-tab svg { flex-shrink: 0; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── Greeting header ────────────────────────────────────────── */
+.dash-greeting {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 20px; margin-bottom: 28px; flex-wrap: wrap;
+}
+.dash-greeting-left {}
+.dash-greeting-title {
+  font-family: 'Lora', serif;
+  font-size: 1.65rem; font-weight: 600;
+  color: #0a2540; line-height: 1.2; margin-bottom: 4px;
+}
+.dash-greeting-sub {
+  font-size: 0.86rem; color: #6b8aa8;
+}
+.dash-date-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: #fff; border: 1px solid #e2edf5;
+  border-radius: 12px; padding: 10px 16px;
+  box-shadow: 0 1px 4px rgba(10,37,64,0.06);
+}
+.dash-date-badge svg { color: #1565c0; flex-shrink: 0; }
+.dash-date-badge-text { font-size: 0.83rem; font-weight: 600; color: #0a2540; }
+.dash-date-badge-sub  { font-size: 0.72rem; color: #9ab0c4; margin-top: 1px; }
+
+/* ── Stat cards row ─────────────────────────────────────────── */
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid #e2edf5;
+  border-radius: 16px;
+  padding: 20px 22px;
+  box-shadow: 0 1px 4px rgba(10,37,64,0.05), 0 4px 16px rgba(10,37,64,0.05);
+  display: flex; flex-direction: column; gap: 12px;
+  transition: box-shadow 0.2s, transform 0.2s;
+  animation: statIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+}
+.stat-card:hover {
+  box-shadow: 0 4px 20px rgba(10,37,64,0.1);
+  transform: translateY(-2px);
+}
+.stat-card:nth-child(1){ animation-delay: 0s;    }
+.stat-card:nth-child(2){ animation-delay: 0.07s; }
+.stat-card:nth-child(3){ animation-delay: 0.14s; }
+.stat-card:nth-child(4){ animation-delay: 0.21s; }
+@keyframes statIn {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.stat-card-top { display: flex; align-items: center; justify-content: space-between; }
+.stat-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.stat-icon.blue   { background: linear-gradient(135deg,#e3f0ff,#dbeafe); color: #1565c0; }
+.stat-icon.teal   { background: linear-gradient(135deg,#e0f2f0,#ccfbf1); color: #00796b; }
+.stat-icon.orange { background: linear-gradient(135deg,#fff3e0,#fed7aa); color: #d35400; }
+.stat-icon.red    { background: linear-gradient(135deg,#fff0f0,#fee2e2); color: #dc2626; }
+
+.stat-trend {
+  font-size: 0.72rem; font-weight: 700;
+  padding: 3px 8px; border-radius: 20px;
+}
+.trend-up   { background: #f0fdf4; color: #15803d; }
+.trend-down { background: #fef2f2; color: #dc2626; }
+.trend-neu  { background: #f4f8fc; color: #6b8aa8; }
+
+.stat-value {
+  font-family: 'Lora', serif;
+  font-size: 1.9rem; font-weight: 600;
+  color: #0a2540; line-height: 1;
+}
+.stat-label { font-size: 0.8rem; color: #6b8aa8; font-weight: 500; }
+
+/* ── Main grid ──────────────────────────────────────────────── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── Section title ──────────────────────────────────────────── */
+.section-title {
+  font-family: 'Lora', serif;
+  font-size: 1rem; font-weight: 600;
+  color: #0a2540; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px; background: #eef4f9;
+}
+
+/* ── News / announcements card ──────────────────────────────── */
+.news-card {
+  background: #fff;
+  border: 1px solid #e2edf5;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(10,37,64,0.05), 0 4px 16px rgba(10,37,64,0.05);
+  margin-bottom: 20px;
+}
+.news-card-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid #f0f6fb;
+  background: linear-gradient(180deg, #fafcff 0%, #fff 100%);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.news-card-head h3 {
+  font-family: 'Lora', serif;
+  font-size: 0.98rem; font-weight: 600; color: #0a2540;
+}
+.news-new-badge {
+  background: #dc2626; color: #fff;
+  font-size: 0.65rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+  letter-spacing: 0.3px; text-transform: uppercase;
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+.news-item {
+  padding: 16px 22px;
+  border-bottom: 1px solid #f0f6fb;
+  display: flex; gap: 14px; align-items: flex-start;
+  transition: background 0.15s;
+}
+.news-item:last-child { border-bottom: none; }
+.news-item:hover { background: #fafcff; }
+
+.news-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  flex-shrink: 0; margin-top: 6px;
+}
+.news-dot.urgent  { background: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.15); }
+.news-dot.info    { background: #1565c0; }
+.news-dot.success { background: #15803d; }
+.news-dot.warn    { background: #d97706; }
+
+.news-item-title {
+  font-size: 0.875rem; font-weight: 600;
+  color: #0a2540; margin-bottom: 3px; line-height: 1.3;
+}
+.news-item-body {
+  font-size: 0.8rem; color: #6b8aa8;
+  line-height: 1.55;
+}
+.news-item-time {
+  font-size: 0.72rem; color: #9ab0c4;
+  margin-top: 5px; display: flex; align-items: center; gap: 4px;
+}
+
+/* ── Agenda card ────────────────────────────────────────────── */
+.agenda-card {
+  background: #fff;
+  border: 1px solid #e2edf5;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(10,37,64,0.05), 0 4px 16px rgba(10,37,64,0.05);
+  margin-bottom: 20px;
+}
+.agenda-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f6fb;
+  background: linear-gradient(180deg, #fafcff 0%, #fff 100%);
+}
+.agenda-head h3 {
+  font-family: 'Lora', serif;
+  font-size: 0.95rem; font-weight: 600; color: #0a2540;
+}
+
+.agenda-item {
+  display: flex; gap: 14px; align-items: stretch;
+  padding: 13px 20px;
+  border-bottom: 1px solid #f0f6fb;
+  transition: background 0.15s;
+}
+.agenda-item:last-child { border-bottom: none; }
+.agenda-item:hover { background: #fafcff; }
+
+.agenda-time-col {
+  display: flex; flex-direction: column;
+  align-items: center; flex-shrink: 0;
+  width: 52px;
+}
+.agenda-time {
+  font-size: 0.78rem; font-weight: 700;
+  color: #1565c0; white-space: nowrap;
+}
+.agenda-time-line {
+  width: 1px; flex: 1; background: #e2edf5;
+  margin: 4px 0; min-height: 16px;
+}
+
+.agenda-content { flex: 1; min-width: 0; }
+.agenda-title {
+  font-size: 0.845rem; font-weight: 600;
+  color: #0a2540; margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.agenda-patient {
+  font-size: 0.76rem; color: #6b8aa8;
+  display: flex; align-items: center; gap: 4px;
+}
+
+.agenda-type {
+  font-size: 0.68rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 20px;
+  white-space: nowrap; align-self: flex-start;
+  margin-top: 2px; flex-shrink: 0;
+}
+.type-consult { background: #e3f0ff; color: #1565c0; }
+.type-controle { background: #e0f2f0; color: #00796b; }
+.type-spoed    { background: #fff5f5; color: #dc2626; }
+.type-telefo   { background: #fff8e1; color: #b45309; }
+.type-operatie { background: #f3e8ff; color: #7c3aed; }
+
+/* ── Quick actions ──────────────────────────────────────────── */
+.quick-actions {
+  background: #fff;
+  border: 1px solid #e2edf5;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(10,37,64,0.05), 0 4px 16px rgba(10,37,64,0.05);
+  margin-bottom: 20px;
+}
+.quick-actions-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f6fb;
+}
+.quick-actions-head h3 {
+  font-family: 'Lora', serif;
+  font-size: 0.95rem; font-weight: 600; color: #0a2540;
+}
+.quick-action-btn {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 20px; border-bottom: 1px solid #f0f6fb;
+  cursor: pointer; transition: background 0.15s;
+  text-decoration: none;
+}
+.quick-action-btn:last-child { border-bottom: none; }
+.quick-action-btn:hover { background: #f4f8fc; }
+.quick-action-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.quick-action-label { font-size: 0.845rem; font-weight: 600; color: #0a2540; }
+.quick-action-sub   { font-size: 0.73rem; color: #9ab0c4; margin-top: 1px; }
+.quick-action-arrow { margin-left: auto; color: #c5d8e8; flex-shrink: 0; }
+
+/* ── Recent patients ────────────────────────────────────────── */
+.patient-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 22px; border-bottom: 1px solid #f0f6fb;
+  transition: background 0.15s;
+}
+.patient-row:last-child { border-bottom: none; }
+.patient-row:hover { background: #fafcff; }
+.patient-avatar-sm {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-family: 'Lora', serif; font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.patient-name { font-size: 0.845rem; font-weight: 600; color: #0a2540; }
+.patient-detail { font-size: 0.75rem; color: #6b8aa8; margin-top: 1px; }
+.patient-status {
+  margin-left: auto; font-size: 0.7rem; font-weight: 700;
+  padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+}
+.status-stabiel  { background: #f0fdf4; color: #15803d; }
+.status-opname   { background: #fff5f5; color: #dc2626; }
+.status-controle { background: #e3f0ff; color: #1565c0; }
+.status-ontslagen{ background: #f4f8fc; color: #6b8aa8; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .stat-row  { grid-template-columns: repeat(2, 1fr); }
+  .dash-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .stat-row { grid-template-columns: 1fr 1fr; }
+  .page-tabs { width: 100%; }
+}
