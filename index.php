@@ -4,6 +4,9 @@ require_once 'dbfuncs.php';
 
 if (empty($_SESSION['authed'])) { header('Location: login.php'); exit; }
 
+$currentUserRole = getSelect("SELECT role FROM users WHERE id = " . (int)$_SESSION['userid']);
+$isAdmin = $currentUserRole && (int)$currentUserRole[0][0] === 1;
+
 $activePage = 'users';
 
 /* ════════════════════════════════════════════════════════════════════
@@ -44,6 +47,12 @@ $USE_VULNERABLE_IDOR = true;    // ← VERANDER DIT OM TE SCHAKELEN
 // Handle AJAX request for medical data
 if (isset($_GET['medical_ajax']) && isset($_GET['uid'])) {
     header('Content-Type: application/json');
+
+    $currentUserRole = getSelect("SELECT role FROM users WHERE id = " . (int)$_SESSION['userid']);
+    if (!$currentUserRole || (int)$currentUserRole[0][0] !== 1) {
+        echo json_encode(['error' => 'Toegang geweigerd.']);
+        exit;
+    }
 
     $uid = $_GET['uid'];
 
@@ -284,10 +293,12 @@ if (!empty($getUser)) {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Dashboard
     </button>
+    <?php if ($isAdmin): ?>
     <button class="page-tab" id="tab-search" onclick="switchPageTab('search')">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       Gebruikerszoekopdracht
     </button>
+    <?php endif; ?>
   </div>
 
   <!-- ══════════════════════════════════════════════════════════
@@ -550,6 +561,7 @@ if (!empty($getUser)) {
   <!-- ══════════════════════════════════════════════════════════
        TAB 2 — GEBRUIKERSZOEKOPDRACHT
   ══════════════════════════════════════════════════════════ -->
+  <?php if ($isAdmin): ?>
   <div class="tab-content" id="content-search">
 
   <div class="page-title-row">
@@ -683,6 +695,15 @@ if (!empty($getUser)) {
 </div>
 
   </div><!-- end tab-content search -->
+
+  <?php else: ?>
+<div class="tab-content" id="content-search">
+  <div class="card"><div class="empty-state">
+    <p class="empty-title">Toegang geweigerd</p>
+    <p>Alleen beheerders mogen gebruikers zoeken.</p>
+  </div></div>
+</div>
+<?php endif; ?>
 
 <!-- ── Medical data modal ────────────────────────────────────────── -->
 <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
