@@ -2,118 +2,98 @@
 require_once 'common.php';
 require_once 'dbfuncs.php';
 
-if (empty($_SESSION['authed'])) { header('Location: login.php'); exit; }
-
-$currentUserRole = getSelect("SELECT role FROM users WHERE id = " . (int)$_SESSION['userid']);
-$isAdmin = $currentUserRole && (int)$currentUserRole[0][0] === 1;
-
-$activePage = 'users';
-
-/* ════════════════════════════════════════════════════════════════════
-   SQL INJECTIE KWETSBAARHEID — GEBRUIKERSZOEKOPDRACHT
-
-   ⚠️  KWETSBARE modus (true):
-   Probeer in het gebruikersnaamveld: ' OR '1'='1
-   Probeer in het ID-veld:           1 or 1=1
-   Resultaat: geeft ALLE gebruikers terug, inclusief wachtwoorden
-
-   Probeer ook een UNION attack:
-   ' UNION SELECT 1,2,3,4,5,6,'hello world
-
-   ✅  VEILIGE modus (false):
-   Zelfde invoer → query is veilig, geen data lekt
-════════════════════════════════════════════════════════════════════ */
-
-$USE_VULNERABLE_SEARCH = true;  // ← VERANDER DIT OM TE SCHAKELEN
-                                 // true  = KWETSBAAR (SQL injectie mogelijk)
-                                 // false = VEILIG (prepared statements)
-
-/* ════════════════════════════════════════════════════════════════════
-   IDOR KWETSBAARHEID — MEDISCHE DATA OPHALEN
-
-   ⚠️  KWETSBARE modus (true):
-   De medische data wordt opgehaald op basis van user_id zonder te
-   controleren of de ingelogde gebruiker daar toegang toe heeft.
-   Elke ingelogde gebruiker kan de data van elke andere gebruiker zien.
-
-   ✅  VEILIGE modus (false):
-   Alleen admins (role=1) mogen medische data bekijken.
-════════════════════════════════════════════════════════════════════ */
-
-$USE_VULNERABLE_IDOR = true;    // ← VERANDER DIT OM TE SCHAKELEN
-                                 // true  = KWETSBAAR (IDOR mogelijk)
-                                 // false = VEILIG (rol-controle)
-
-// Handle AJAX request for medical data
-if (isset($_GET['medical_ajax']) && isset($_GET['uid'])) {
-    header('Content-Type: application/json');
-
-    $currentUserRole = getSelect("SELECT role FROM users WHERE id = " . (int)$_SESSION['userid']);
-    if (!$currentUserRole || (int)$currentUserRole[0][0] !== 1) {
-        echo json_encode(['error' => 'Toegang geweigerd.']);
-        exit;
-    }
-
-    $uid = $_GET['uid'];
-
-    if ($USE_VULNERABLE_IDOR) {
-        // ⚠️  KWETSBAAR: geen rol-controle — elke gebruiker kan dit opvragen
-        // Ook SQL injectie mogelijk via uid parameter
-        $medData = getSelect("SELECT * FROM medical_data WHERE user_id = " . $uid);
-        $userData = getSelect("SELECT id, username, firstname, surname, email, role FROM users WHERE id = " . $uid);
-    } else {
-        // ✅  VEILIG: controleer of de ingelogde gebruiker een admin is
-        $currentUser = getSelect("SELECT role FROM users WHERE id = " . (int)$_SESSION['userid']);
-        if (!$currentUser || $currentUser[0][0] != 1) {
-            echo json_encode(['error' => 'Toegang geweigerd. Alleen beheerders mogen medische gegevens inzien.']);
-            exit;
-        }
-        $safeUid = (int)$uid;
-        $medData  = getSelect("SELECT * FROM medical_data WHERE user_id = " . $safeUid);
-        $userData = getSelect("SELECT id, username, firstname, surname, email, role FROM users WHERE id = " . $safeUid);
-    }
-
-    echo json_encode([
-        'user'    => $userData ? $userData[0] : null,
-        'medical' => $medData  ? $medData[0]  : null,
-        'vulnerable' => $USE_VULNERABLE_IDOR,
-    ]);
-    exit;
+if (empty($_SESSION['authed'])) {  // Controleert of gebruiker ingelogd is
+  header('Location: login.php');    // Stuur naar login pagina
+  exit;                             // Stop het script
 }
 
-$getUser = $_REQUEST["username"] ?? '';
-$getId   = $_REQUEST["id"] ?? '';
-$query   = '';
-$results = null;
+$currentUserRole = getSelect("SELECT role FROM users WHERE id = " . (int)$_SESSION['userid']);  // Haal rol van huidige gebruiker
+$isAdmin = $currentUserRole && (int)$currentUserRole[0][0] === 1;  // Controleert of gebruiker admin is (role = 1)
 
-if (!empty($getUser)) {
-    if ($USE_VULNERABLE_SEARCH) {
-        // ⚠️  KWETSBAAR: directe string samenvoeging — SQL INJECTIE MOGELIJK
-        $query   = "SELECT * FROM users WHERE username = '" . $getUser . "'";
-        $results = getSelect($query);
-    } else {
-        // ✅  VEILIG: prepared statement — invoer wordt als data behandeld
-        global $con; if ($con === null) connect();
-        $stmt = mysqli_prepare($con, "SELECT * FROM users WHERE username = ?");
-        mysqli_stmt_bind_param($stmt, "s", $getUser);
-        mysqli_stmt_execute($stmt);
-        $res = mysqli_stmt_get_result($stmt);
-        $query = "SELECT * FROM users WHERE username = ? (prepared statement)";
-        if ($res && mysqli_num_rows($res) > 0) {
-            while ($row = mysqli_fetch_row($res)) $results[] = $row;
-        }
+$activePage = 'users';  // Markeer deze pagina als "users"
+
+/* SQL INJECTIE KWETSBAARHEID — GEBRUIKERSZOEKOPDRACHT
+     KWETSBAAR (true): Probeer ' OR '1'='1' of 1 or 1=1
+     VEILIG (false): Zelfde invoer wordt als tekst behandeld */
+
+$USE_VULNERABLE_SEARCH = false;  // Toggle: true = kwetsbaar, false = veilig
+
+/* IDOR KWETSBAARHEID — MEDISCHE DATA OPHALEN
+    KWETSBAAR (true): Elke ingelogde gebruiker kan andermans data zien
+    VEILIG (false): Alleen admins mogen medische data bekijken */
+
+$USE_VULNERABLE_IDOR = false;  // Toggle: true = kwetsbaar, false = veilig
+
+if (isset($_GET['medical_ajax']) && isset($_GET['uid'])) {  // Controleert of AJAX medische data request is
+  header('Content-Type: application/json');  // Zeg tegen browser dat het JSON is
+
+  $currentUserRole = getSelect("SELECT role FROM users WHERE id = " . (int)$_SESSION['userid']);  // Haal rol van gebruiker
+  if (!$currentUserRole || (int)$currentUserRole[0][0] !== 1) {  // Als geen rol of niet admin
+    echo json_encode(['error' => 'Toegang geweigerd.']);  // Stuur fout
+    exit;  // Stop script
+  }
+
+  $uid = $_GET['uid'];  // Pak user ID uit URL
+
+  if ($USE_VULNERABLE_IDOR) {  // Als IDOR kwetsbaarheid ingeschakeld
+    //   KWETSBAAR: geen rol-controle, elke gebruiker kan dit opvragen
+    $medData = getSelect("SELECT * FROM medical_data WHERE user_id = " . $uid);  // Haal medische data op (GEEN bescherming tegen SQL injectie!)
+    $userData = getSelect("SELECT id, username, firstname, surname, email, role FROM users WHERE id = " . $uid);  // Haal gebruikerdata op
+  } else {  // VEILIGE modus
+    //  VEILIG: controleer of gebruiker admin is
+    $currentUser = getSelect("SELECT role FROM users WHERE id = " . (int)$_SESSION['userid']);  // Haal huidige gebruiker rol
+    if (!$currentUser || $currentUser[0][0] != 1) {  // Als niet admin
+      echo json_encode(['error' => 'Toegang geweigerd. Alleen beheerders mogen medische gegevens inzien.']);  // Stuur fout
+      exit;  // Stop script
     }
-} elseif (!empty($getId)) {
-    if ($USE_VULNERABLE_SEARCH) {
-        // ⚠️  KWETSBAAR: geen validatie op ID — SQL INJECTIE MOGELIJK
-        $query   = "SELECT * FROM users WHERE id = " . $getId;
-        $results = getSelect($query);
-    } else {
-        // ✅  VEILIG: cast naar integer — alleen een getal is mogelijk
-        $safeId  = (int) $getId;
-        $query   = "SELECT * FROM users WHERE id = {$safeId} (integer cast)";
-        $results = getSelect("SELECT * FROM users WHERE id = " . $safeId);
+    $safeUid = (int)$uid;  // Zet UID veilig om naar getal
+    $medData  = getSelect("SELECT * FROM medical_data WHERE user_id = " . $safeUid);  // Haal medische data op (veilig)
+    $userData = getSelect("SELECT id, username, firstname, surname, email, role FROM users WHERE id = " . $safeUid);  // Haal gebruikerdata op (veilig)
+  }
+
+  echo json_encode([  // Stuur JSON terug
+    'user'    => $userData ? $userData[0] : null,  // Gebruikersinformatie
+    'medical' => $medData  ? $medData[0]  : null,  // Medische gegevens
+    'vulnerable' => $USE_VULNERABLE_IDOR,  // Is het kwetsbaar?
+  ]);
+  exit;  // Stop script
+}
+
+$getUser = $_REQUEST["username"] ?? '';  // Pak gebruikersnaam uit formulier, of zet op leeg
+$getId   = $_REQUEST["id"] ?? '';        // Pak ID uit formulier, of zet op leeg
+$query   = '';                            // Maak lege query variabele
+$results = null;                          // Zet resultaten op null
+
+if (!empty($getUser)) {  // Als gebruiker op username heeft gezocht
+  if ($USE_VULNERABLE_SEARCH) {  // Als kwetsbare modus ingeschakeld
+    //  KWETSBAAR: directe string samenvoeging — SQL INJECTIE MOGELIJK
+    $query   = "SELECT * FROM users WHERE username = '" . $getUser . "'";  // Bouw query met invoer erin (GEEN bescherming!)
+    $results = getSelect($query);  // Voer query uit
+  } else {  // VEILIGE modus
+    //  VEILIG: prepared statement — invoer wordt als data behandeld
+    global $con;  // Gebruik globale database connectie
+    if ($con === null) connect();  // Maak connectie aan als nodig
+    $stmt = mysqli_prepare($con, "SELECT * FROM users WHERE username = ?");  // Bereid query voor met placeholder
+    mysqli_stmt_bind_param($stmt, "s", $getUser);  // Voeg gebruikersnaam veilig in
+    mysqli_stmt_execute($stmt);  // Voer query uit
+    $res = mysqli_stmt_get_result($stmt);  // Haal resultaten op
+    $query = "SELECT * FROM users WHERE username = ? (prepared statement)";  // Sla query op
+    if ($res && mysqli_num_rows($res) > 0) {  // Als er resultaten zijn
+      while ($row = mysqli_fetch_row($res))  // Voor elke rij
+        $results[] = $row;  // Voeg rij toe aan array
     }
+  }
+} elseif (!empty($getId)) {  // Anders, als gebruiker op ID heeft gezocht
+  if ($USE_VULNERABLE_SEARCH) {  // Als kwetsbare modus ingeschakeld
+    //  KWETSBAAR: geen validatie op ID — SQL INJECTIE MOGELIJK
+    $query   = "SELECT * FROM users WHERE id = " . $getId;  // Bouw query met invoer erin (GEEN bescherming!)
+    $results = getSelect($query);  // Voer query uit
+  } else {  // VEILIGE modus
+    //  VEILIG: cast naar integer — alleen een getal is mogelijk
+    $safeId  = (int) $getId;  // Zet ID veilig om naar getal
+    $query   = "SELECT * FROM users WHERE id = {$safeId} (integer cast)";  // Sla query op
+    $results = getSelect("SELECT * FROM users WHERE id = " . $safeId);  // Voer veilige query uit
+  }
 }
 ?>
 <!DOCTYPE html>

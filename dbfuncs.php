@@ -1,4 +1,10 @@
 <?php
+
+// Hide all error reporting (keeps vulnerabilities, hides stack traces)
+error_reporting(0);
+ini_set('display_errors', 0);
+
+
 require_once 'common.php';
 require_once 'consts.php';
 
